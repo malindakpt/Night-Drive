@@ -36,47 +36,21 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
 
     private TextToSpeech tts;
     private Button btnStart;
-    private EditText txtText;
+
+    private boolean isAnswered = false;
+    Handler handler = null;
+    Runnable callBack = null;
+    boolean isNeedToListen = false;
 
     private int qID = 0;
-
-
     private static final int REQUEST_CODE = 1234;
-    private ListView wordsList;
-
-    Timer timer = new Timer();
-
-
-    private SpeechRecognizer mSpeechRecognizer;
-    private Intent mSpeechRecognizerIntent;
-
     private HashMap<String, String> params = new HashMap<String, String>();
 
-
-
-    private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
-            = new BottomNavigationView.OnNavigationItemSelectedListener() {
-
-        @Override
-        public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-            switch (item.getItemId()) {
-                case R.id.navigation_home:
-                    mTextMessage.setText(R.string.title_home);
-                    return true;
-                case R.id.navigation_dashboard:
-                    mTextMessage.setText(R.string.title_dashboard);
-                    return true;
-                case R.id.navigation_notifications:
-                    mTextMessage.setText(R.string.title_notifications);
-                    return true;
-            }
-            return false;
-        }
-
-    };
+    private String TAG = "Night Driving : ";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.i(TAG, "Started");
         mainActivity = this;
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity);
@@ -109,37 +83,19 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     }
 
     private void askQues(){
-        speak(QuestioinManager.getQuestion(qID));
-
-        final Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                mainActivity.startVoiceRecognitionActivity();
-            }
-        }, 25000);
+        isNeedToListen = true;
+        speak(QuestioinManager.getQuestion());
     }
 
-    /**
-     * Handle the action of the button being clicked
-     */
-//    public void speakButtonClicked(View v)
-//    {
-//        startVoiceRecognitionActivity();
-//    }
-    /**
-     * Fire an intent to start the voice recognition activity.
-     */
+
     public void startVoiceRecognitionActivity()
     {
         final Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
                 RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Voice recognition Demo...");
-        intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS , 20000000);
+        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Give your answer ?");
         startActivityForResult(intent, REQUEST_CODE);
-
-
+        Log.i(TAG, "Listner opened");
     }
 
     /**
@@ -150,11 +106,31 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     {
         if (requestCode == REQUEST_CODE && resultCode == RESULT_OK)
         {
+
+
+
             // Populate the wordsList with the String values the recognition engine thought it heard
-            ArrayList<String> matches = data.getStringArrayListExtra(
+            final ArrayList<String> matches = data.getStringArrayListExtra(
                     RecognizerIntent.EXTRA_RESULTS);
 
-            speak("Thanks "+matches.get(0));
+            Log.i(TAG, "Got a answer : " +matches);
+
+            isAnswered = true;
+            isNeedToListen = false;
+            speak("Ok...  good    ");
+
+
+            final Handler handler = new Handler();
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            Log.i(TAG, "------- NEW QUESTION --------");
+                            isNeedToListen = true;
+                            speak(QuestioinManager.getQuestion());
+
+                        }
+                    }, 5000);
+
 //            wordsList.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1,
 //                    matches));
         }
@@ -162,11 +138,35 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     }
 
 
-
-
-
     public void speak(String str){
+
+        Log.i(TAG, "speak: "+str);
+
+        isAnswered = false;
         tts.speak(str, TextToSpeech.QUEUE_FLUSH, params);
+
+        if(handler != null && callBack!= null){
+            handler.removeCallbacks(callBack);
+        }
+
+        handler = new Handler();
+        callBack = new Runnable() {
+            @Override
+            public void run() {
+                if(!isAnswered) {
+                    isNeedToListen = true;
+                    speak("I did not get you");
+
+//                    Log.i(TAG, "speak: "+"---I did not get you");
+
+                }else{
+                    Log.i(TAG, "Ques answered");
+                }
+            }
+        };
+        handler.postDelayed(callBack, 10000);
+
+
     }
 
     @Override
@@ -191,7 +191,9 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
 
                 @Override
                 public void onDone(String utteranceId) {
-                    mainActivity.startVoiceRecognitionActivity();
+                    if(isNeedToListen) {
+                        mainActivity.startVoiceRecognitionActivity();
+                    }
                 }
 
                 @Override

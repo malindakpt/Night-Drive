@@ -6,7 +6,7 @@ package nd.mkpt.com.nightdriving;
 
 public class QuestioinManager {
     public static int count = 0;
-    public static String getQuestion(int id) {
-        return "Question "+id;
+    public static String getQuestion() {
+        return "Quiz   "+count++;
     }
 }
