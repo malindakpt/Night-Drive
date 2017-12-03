@@ -22,6 +22,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Timer;
@@ -41,6 +42,10 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     private ListView wordsList;
 
     Timer timer = new Timer();
+
+    HashMap<String, String> params = new HashMap<String, String>();
+
+
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -86,9 +91,10 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
 //        btnSpeak = (Button) findViewById(R.id.btnSpeak);
 //
 //        txtText = (EditText) findViewById(R.id.txtText);
-
+        params.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID,"stringId");
 
         tts = new TextToSpeech(this, this);
+//        tts.setOnUtteranceProgressListener(utteranceProgressListener);
         // button on click event
         btnStart = (Button) findViewById(R.id.btnStart);
         btnStart.setOnClickListener(new View.OnClickListener() {
@@ -147,7 +153,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             ArrayList<String> matches = data.getStringArrayListExtra(
                     RecognizerIntent.EXTRA_RESULTS);
 
-            tts.speak("Thanks "+matches.get(0), TextToSpeech.QUEUE_FLUSH, null);
+            tts.speak("Thanks "+matches.get(0), TextToSpeech.QUEUE_FLUSH, params);
 //            wordsList.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1,
 //                    matches));
         }
@@ -158,7 +164,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
 
         String text = " Hi Malinda ";
 
-        tts.speak(text, TextToSpeech.QUEUE_FLUSH, null);
+        tts.speak(text, TextToSpeech.QUEUE_FLUSH, params);
 
 
         TimerTask updateBall = new UpdateBallTask(this);
@@ -215,19 +221,35 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
 
             tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
                 @Override
+                public void onStart(String utteranceId) {
+                    Log.e("TTS", "This Language is not supported");
+                }
+
+                @Override
                 public void onDone(String utteranceId) {
-                    // Log.d("MainActivity", "TTS finished");
                     mainActivity.startVoiceRecognitionActivity();
                 }
 
                 @Override
                 public void onError(String utteranceId) {
-                }
-
-                @Override
-                public void onStart(String utteranceId) {
+                    Log.e("TTS", "This Language is not supported");
                 }
             });
+//            tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+//                @Override
+//                public void onDone(String utteranceId) {
+//                    // Log.d("MainActivity", "TTS finished");
+//                    mainActivity.startVoiceRecognitionActivity();
+//                }
+//
+//                @Override
+//                public void onError(String utteranceId) {
+//                }
+//
+//                @Override
+//                public void onStart(String utteranceId) {
+//                }
+//            });
 
 
             int result = tts.setLanguage(Locale.US);
