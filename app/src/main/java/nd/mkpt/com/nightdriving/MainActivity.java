@@ -43,15 +43,6 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         Log.i(TAG, "Started");
         QuestioinManager.loadQues();
 
-
-//        ImageView imageView = (ImageView) findViewById(R.id.gifView);
-//        Glide.with(this)
-//                .load(imageUrl)
-//                .asGif()
-//                .placeholder(R.drawable.loading2)
-//                .crossFade()
-//                .into(imageView);
-
         mainActivity = this;
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity);
@@ -81,13 +72,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             }
         });
 
-
-
-
-
-
-
-//        // Disable button if no recognition service is present
+//        Disable button if no recognition service is present
         PackageManager pm = getPackageManager();
         List<ResolveInfo> activities = pm.queryIntentActivities(
                 new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH), 0);
@@ -107,11 +92,21 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
 
     public void startVoiceRecognitionActivity()
     {
-        final Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Give your answer ?");
-        startActivityForResult(intent, REQUEST_CODE);
+//        final Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+//        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+//                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+//        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Give your answer ?");
+//        intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 15000);
+//        startActivityForResult(intent, REQUEST_CODE);
+//        Log.i(TAG, "Listner opened");
+
+
+
+        Intent intent = new Intent(this, MainRecorderActiviry.class);
+//        EditText editText = (EditText) findViewById(R.id.editText);
+//        String message = editText.getText().toString();
+//        intent.putExtra(EXTRA_MESSAGE, message);
+        startActivity(intent);
         Log.i(TAG, "Listner opened");
     }
 
