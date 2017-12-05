@@ -1,33 +1,22 @@
 package nd.mkpt.com.nightdriving;
-
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.speech.RecognizerIntent;
-import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
-import android.support.annotation.NonNull;
-import android.support.design.widget.BottomNavigationView;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Timer;
 
 public class MainActivity extends AppCompatActivity implements TextToSpeech.OnInitListener {
 
@@ -35,8 +24,8 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     public MainActivity mainActivity;
 
     private TextToSpeech tts;
-    private Button btnStart;
-
+    private Button btnStart, btnStop;
+    private ProgressBar progressBar;
     private boolean isAnswered = false;
     Handler handler = null;
     Runnable callBack = null;
@@ -47,10 +36,22 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     private HashMap<String, String> params = new HashMap<String, String>();
 
     private String TAG = "Night Driving : ";
+    private boolean isRun = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.i(TAG, "Started");
+        QuestioinManager.loadQues();
+
+
+//        ImageView imageView = (ImageView) findViewById(R.id.gifView);
+//        Glide.with(this)
+//                .load(imageUrl)
+//                .asGif()
+//                .placeholder(R.drawable.loading2)
+//                .crossFade()
+//                .into(imageView);
+
         mainActivity = this;
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity);
@@ -60,15 +61,31 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         params.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID,"stringId");
 
         tts = new TextToSpeech(this, this);
+        tts.setSpeechRate(0.65F);
+        tts.setPitch(-5);
         btnStart = (Button) findViewById(R.id.btnStart);
+        btnStop = (Button) findViewById(R.id.btnStop);
+        progressBar = (ProgressBar) findViewById(R.id.progressBar3);
         btnStart.setOnClickListener(new View.OnClickListener() {
-
             @Override
             public void onClick(View arg0) {
                 askQues();
+                progressBar.setIndeterminate(true);
             }
-
         });
+        btnStop.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View arg0) {
+                isRun = false;
+                progressBar.setIndeterminate(false);
+            }
+        });
+
+
+
+
+
+
 
 //        // Disable button if no recognition service is present
         PackageManager pm = getPackageManager();
@@ -107,8 +124,6 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         if (requestCode == REQUEST_CODE && resultCode == RESULT_OK)
         {
 
-
-
             // Populate the wordsList with the String values the recognition engine thought it heard
             final ArrayList<String> matches = data.getStringArrayListExtra(
                     RecognizerIntent.EXTRA_RESULTS);
@@ -117,7 +132,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
 
             isAnswered = true;
             isNeedToListen = false;
-            speak("Ok...  good    ");
+            speak(QuestioinManager.getAnswer());
 
 
             final Handler handler = new Handler();
@@ -140,32 +155,30 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
 
     public void speak(String str){
 
-        Log.i(TAG, "speak: "+str);
+        if(isRun) {
+            Log.i(TAG, "speak: " + str);
 
-        isAnswered = false;
-        tts.speak(str, TextToSpeech.QUEUE_FLUSH, params);
+            isAnswered = false;
+            tts.speak(str, TextToSpeech.QUEUE_FLUSH, params);
 
-        if(handler != null && callBack!= null){
-            handler.removeCallbacks(callBack);
-        }
-
-        handler = new Handler();
-        callBack = new Runnable() {
-            @Override
-            public void run() {
-                if(!isAnswered) {
-                    isNeedToListen = true;
-                    speak("I did not get you");
-
-//                    Log.i(TAG, "speak: "+"---I did not get you");
-
-                }else{
-                    Log.i(TAG, "Ques answered");
-                }
+            if (handler != null && callBack != null) {
+                handler.removeCallbacks(callBack);
             }
-        };
-        handler.postDelayed(callBack, 10000);
 
+            handler = new Handler();
+            callBack = new Runnable() {
+                @Override
+                public void run() {
+                    if (!isAnswered) {
+                        isNeedToListen = true;
+                        speak(QuestioinManager.getRepeat());
+                    } else {
+                        Log.i(TAG, "Ques answered");
+                    }
+                }
+            };
+            handler.postDelayed(callBack, 10000);
+        }
 
     }
 
@@ -191,7 +204,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
 
                 @Override
                 public void onDone(String utteranceId) {
-                    if(isNeedToListen) {
+                    if(isNeedToListen && isRun) {
                         mainActivity.startVoiceRecognitionActivity();
                     }
                 }
