@@ -33,4 +33,22 @@
         android:layout_marginTop="26dp"
         android:text="ToggleButton" />
 
+    <Button
+        android:id="@+id/button1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignStart="@+id/toggleButton1"
+        android:layout_below="@+id/textView1"
+        android:layout_marginTop="66dp"
+        android:text="Stop" />
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/textView1"
+        android:layout_alignParentEnd="true" />
+
 </RelativeLayout>

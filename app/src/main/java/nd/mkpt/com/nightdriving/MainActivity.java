@@ -24,6 +24,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     public MainActivity mainActivity;
 
     private TextToSpeech tts;
+    private TextView textView;
     private Button btnStart, btnStop;
     private ProgressBar progressBar;
     private boolean isAnswered = false;
@@ -56,10 +57,12 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         tts.setPitch(-5);
         btnStart = (Button) findViewById(R.id.btnStart);
         btnStop = (Button) findViewById(R.id.btnStop);
+        textView = (TextView) findViewById(R.id.textView);
         progressBar = (ProgressBar) findViewById(R.id.progressBar3);
         btnStart.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View arg0) {
+                isRun = true;
                 askQues();
                 progressBar.setIndeterminate(true);
             }
@@ -102,11 +105,11 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
 
 
 
-        Intent intent = new Intent(this, MainRecorderActiviry.class);
+        Intent intent = new Intent(this, RecorderActivity.class);
 //        EditText editText = (EditText) findViewById(R.id.editText);
 //        String message = editText.getText().toString();
 //        intent.putExtra(EXTRA_MESSAGE, message);
-        startActivity(intent);
+        startActivityForResult(intent,REQUEST_CODE);
         Log.i(TAG, "Listner opened");
     }
 
@@ -116,6 +119,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data)
     {
+//        Log.i(TAG, "AAAAAAAA---------------------------- ");
         if (requestCode == REQUEST_CODE && resultCode == RESULT_OK)
         {
 
@@ -124,7 +128,11 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
                     RecognizerIntent.EXTRA_RESULTS);
 
             Log.i(TAG, "Got a answer : " +matches);
-
+            if(matches.size()>0) {
+                textView.setText(matches.get(0));
+            }else{
+                textView.setText("ERRPR CODE");
+            }
             isAnswered = true;
             isNeedToListen = false;
             speak(QuestioinManager.getAnswer());
@@ -160,19 +168,19 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
                 handler.removeCallbacks(callBack);
             }
 
-            handler = new Handler();
-            callBack = new Runnable() {
-                @Override
-                public void run() {
-                    if (!isAnswered) {
-                        isNeedToListen = true;
-                        speak(QuestioinManager.getRepeat());
-                    } else {
-                        Log.i(TAG, "Ques answered");
-                    }
-                }
-            };
-            handler.postDelayed(callBack, 10000);
+//            handler = new Handler();
+//            callBack = new Runnable() {
+//                @Override
+//                public void run() {
+//                    if (!isAnswered) {
+//                        isNeedToListen = true;
+//                        speak(QuestioinManager.getRepeat());
+//                    } else {
+//                        Log.i(TAG, "Ques answered");
+//                    }
+//                }
+//            };
+//            handler.postDelayed(callBack, 10000);
         }
 
     }
@@ -195,6 +203,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
                 @Override
                 public void onStart(String utteranceId) {
                     Log.e("TTS", "This Language is not supported");
+
                 }
 
                 @Override

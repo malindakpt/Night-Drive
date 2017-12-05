@@ -19,8 +19,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".MainRecorderActiviry"
-            android:theme="@style/Theme.AppCompat.Dialog"
+        <activity android:name=".RecorderActivity"
+
             android:parentActivityName=".MainActivity" >
             <!-- The meta-data tag is required if you support API level 15 and lower -->
             <meta-data
