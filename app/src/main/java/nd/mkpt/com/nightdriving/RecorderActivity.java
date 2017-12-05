@@ -32,8 +32,8 @@ public class RecorderActivity extends AppCompatActivity  implements RecognitionL
         private SpeechRecognizer speech = null;
         private Intent recognizerIntent;
         private String LOG_TAG = "Mkpt rec ";
-    Handler handler = null;
-    Runnable callBack = null;
+        Handler handler = null;
+        Runnable callBack = null;
         @Override
         protected void onCreate(Bundle savedInstanceState)
         {
@@ -41,42 +41,12 @@ public class RecorderActivity extends AppCompatActivity  implements RecognitionL
             setContentView(R.layout.activity_record);
             returnedText = (TextView) findViewById(R.id.textView1);
             progressBar = (ProgressBar) findViewById(R.id.progressBar);
-//            progressBar.setIndeterminate(true);
-            button1 = (Button) findViewById(R.id.button1);
-            button1.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View arg0) {
-                    stopTimeout();
-                    finishActivity(new ArrayList<String>());
-                }
-            });
+
             toggleButton = (ToggleButton) findViewById(R.id.toggleButton1);
-//            progressBar.setVisibility(View.INVISIBLE);
-            speech=SpeechRecognizer.createSpeechRecognizer(this);
-            speech.setRecognitionListener(this);
-            recognizerIntent= new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH); recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "en"); recognizerIntent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, this.getPackageName()); recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,RecognizerIntent.LANGUAGE_MODEL_WEB_SEARCH); recognizerIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3);
-
-//            toggleButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener()
-//        {
-//            @Override
-//            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
-//            { // TODO Auto-generated method stub
-//                    if (isChecked)
-//                    {
-//                        progressBar.setVisibility(View.VISIBLE);
-//                        progressBar.setIndeterminate(true);
-//                        speech.startListening(recognizerIntent);
-//                    }
-//                    else
-//                    {
-//                        progressBar.setIndeterminate(false);
-//                        progressBar.setVisibility(View.INVISIBLE);
-//                        speech.stopListening();
-//                    }
-//                }
-//            });
 
 
+
+            startListening();
             startTimeout();
         }
 
@@ -91,19 +61,19 @@ public class RecorderActivity extends AppCompatActivity  implements RecognitionL
             if (handler != null && callBack != null) {
                 handler.removeCallbacks(callBack);
             }
-
-            speech.startListening(recognizerIntent);
-
             handler = new Handler();
             callBack = new Runnable() {
                 @Override
                 public void run() {
-                    Toast.makeText(getApplicationContext(), "Finished !",Toast.LENGTH_SHORT).show();
+                    Log.e(LOG_TAG, "Timeout occured ");
                     finishActivity(new ArrayList<String>());
                 }
             };
             handler.postDelayed(callBack, 10000);
         }
+
+
+
         @Override
         public void onResume()
         {
@@ -113,12 +83,29 @@ public class RecorderActivity extends AppCompatActivity  implements RecognitionL
         protected void onPause()
         {
             super.onPause();
+            stopListening();
+        }
+
+
+        private void stopListening(){
             if (speech != null)
             {
                 speech.destroy();
-                Log.i(LOG_TAG, "destroy");
+                Log.i(LOG_TAG, "Stop Listening");
             }
         }
+
+    private void startListening(){
+        stopListening();
+        speech=SpeechRecognizer.createSpeechRecognizer(this);
+        speech.setRecognitionListener(this);
+        recognizerIntent= new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "en");
+        recognizerIntent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, this.getPackageName());
+        recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,RecognizerIntent.LANGUAGE_MODEL_WEB_SEARCH);
+        recognizerIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3);
+        speech.startListening(recognizerIntent);
+    }
 
 
 
@@ -127,8 +114,6 @@ public class RecorderActivity extends AppCompatActivity  implements RecognitionL
         public void onBeginningOfSpeech()
         { // TODO Auto-generated method stub
             Log.i(LOG_TAG, "onBeginningOfSpeech");
-//            Toast.makeText(getApplicationContext(), "onBeginningOfSpeech",Toast.LENGTH_SHORT).show();
-//            progressBar.setIndeterminate(true);
             progressBar.setMax(10);
         }
         @Override
@@ -142,20 +127,14 @@ public class RecorderActivity extends AppCompatActivity  implements RecognitionL
         public void onEndOfSpeech()
         { // TODO Auto-generated method stub
             Log.i(LOG_TAG, "onEndOfSpeech");
-//            progressBar.setIndeterminate(false);
-//            toggleButton.setChecked(false);
-//            Toast.makeText(getApplicationContext(), "onEndOfSpeech",Toast.LENGTH_SHORT).show();
         }
         @Override
         public void onError(int errorCode)
         {
-            // TODO Auto-generated method stub
             String errorMessage = getErrorText(errorCode);
             Log.e(LOG_TAG, "FAILED " + errorMessage);
-//            returnedText.setText(errorMessage);
-//            toggleButton.setChecked(false);
             Toast.makeText(getApplicationContext(), "FAILED",Toast.LENGTH_SHORT).show();
-            startTimeout();
+            startListening();
         }
         @Override
         public void onEvent(int arg0, Bundle arg1)
@@ -182,29 +161,20 @@ public class RecorderActivity extends AppCompatActivity  implements RecognitionL
         @Override
         public void onResults(Bundle arg0)
         {
-
-            // TODO Auto-generated method stub
             Log.i(LOG_TAG, "onResults");
             ArrayList<String> matches = arg0.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-//            String text = "";
-//            for (String result : matches) text += result + "\n";
-//            returnedText.setText(text);
             stopTimeout();
             finishActivity(matches);
-//            Toast.makeText(getApplicationContext(), "onResults",Toast.LENGTH_SHORT).show();
         }
+
         @Override
         public void onRmsChanged(float rmsdB)
         {
-            // TODO Auto-generated method stub
-//            Log.i(LOG_TAG, "onRmsChanged: " + rmsdB);
-//            Toast.makeText(getApplicationContext(), "onRmsChanged",Toast.LENGTH_SHORT).show();
             progressBar.setProgress((int) rmsdB);
         }
 
         private void finishActivity( ArrayList<String> matches){
             Intent resultIntent = new Intent();
-// TODO Add extras or a data URI to this intent as appropriate.
             resultIntent.putExtra(RecognizerIntent.EXTRA_RESULTS, matches);
             setResult(Activity.RESULT_OK, resultIntent);
             finish();

@@ -1,7 +1,9 @@
 package nd.mkpt.com.nightdriving;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.media.AudioManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.speech.RecognizerIntent;
@@ -13,6 +15,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,6 +35,8 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     Handler handler = null;
     Runnable callBack = null;
     boolean isNeedToListen = false;
+
+    int volume_level;
 
     private int qID = 0;
     private static final int REQUEST_CODE = 1234;
@@ -103,6 +109,9 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
 //        startActivityForResult(intent, REQUEST_CODE);
 //        Log.i(TAG, "Listner opened");
 
+        AudioManager am = (AudioManager) getSystemService(AUDIO_SERVICE);
+        volume_level= am.getStreamVolume(AudioManager.STREAM_MUSIC);
+        am.setStreamVolume(AudioManager.STREAM_MUSIC, 0,0);
 
 
         Intent intent = new Intent(this, RecorderActivity.class);
@@ -120,6 +129,10 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     protected void onActivityResult(int requestCode, int resultCode, Intent data)
     {
 //        Log.i(TAG, "AAAAAAAA---------------------------- ");
+
+        AudioManager audioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
+        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume_level, 0);
+
         if (requestCode == REQUEST_CODE && resultCode == RESULT_OK)
         {
 
@@ -130,24 +143,26 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             Log.i(TAG, "Got a answer : " +matches);
             if(matches.size()>0) {
                 textView.setText(matches.get(0));
+                isAnswered = true;
+                isNeedToListen = false;
+                speak(QuestioinManager.getAnswer());
+                final Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                     @Override
+                     public void run() {
+                          Log.i(TAG, "------- NEW QUESTION --------");
+                          isNeedToListen = true;
+                          speak(QuestioinManager.getQuestion());
+                     }
+                }, 5000);
             }else{
                 textView.setText("ERRPR CODE");
+                Toast.makeText(getApplicationContext(), "Timeout Please wakeup!",Toast.LENGTH_SHORT).show();
             }
-            isAnswered = true;
-            isNeedToListen = false;
-            speak(QuestioinManager.getAnswer());
 
 
-            final Handler handler = new Handler();
-                    handler.postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            Log.i(TAG, "------- NEW QUESTION --------");
-                            isNeedToListen = true;
-                            speak(QuestioinManager.getQuestion());
 
-                        }
-                    }, 5000);
+
 
 //            wordsList.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1,
 //                    matches));
@@ -158,29 +173,16 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
 
     public void speak(String str){
 
+        if (handler != null && callBack != null) {
+            handler.removeCallbacks(callBack);
+        }
+
         if(isRun) {
             Log.i(TAG, "speak: " + str);
 
             isAnswered = false;
             tts.speak(str, TextToSpeech.QUEUE_FLUSH, params);
 
-            if (handler != null && callBack != null) {
-                handler.removeCallbacks(callBack);
-            }
-
-//            handler = new Handler();
-//            callBack = new Runnable() {
-//                @Override
-//                public void run() {
-//                    if (!isAnswered) {
-//                        isNeedToListen = true;
-//                        speak(QuestioinManager.getRepeat());
-//                    } else {
-//                        Log.i(TAG, "Ques answered");
-//                    }
-//                }
-//            };
-//            handler.postDelayed(callBack, 10000);
         }
 
     }
